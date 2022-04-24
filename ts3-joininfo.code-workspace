@@ -1,0 +1,81 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"bungcip.better-toml",
+			"panicbit.cargo",
+			"vadimcn.vscode-lldb",
+			"rust-lang.rust",
+			"swellaby.rust-pack",
+			"lorenzopirro.rust-flash-snippets",
+			"PolyMeilex.rust-targets"
+		]
+	},
+	"settings": {},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "Full build pipeline",
+				"dependsOn": [
+					"Build TS3 plugin dlls",
+					"Package ts3_plugin archive",
+					"Install plugin in TS3 client"
+				],
+				"dependsOrder": "sequence",
+				"problemMatcher": []
+			},
+			{
+				"label": "Build TS3 plugin dlls",
+				"dependsOn": [
+					"Remove old dlls",
+					"Build package for x86_64-pc-windows-msvc"
+				],
+				"dependsOrder": "sequence",
+				"problemMatcher": [
+					"$rustc"
+				]
+			},
+			{
+				"label": "Remove old dlls",
+				"type": "shell",
+				"command": "rm ./ts3_package/plugins/*.dll"
+			}
+			{
+				"label": "Package ts3_plugin archive",
+				"type": "shell",
+				"command": "Compress-Archive -Path ./ts3_package/* -DestinationPath ./ts3joininfo.ts3_plugin -Update"
+			},
+			{
+				"label": "Install plugin in TS3 client",
+				"type": "shell",
+				"command": "& 'C:\\Program Files\\TeamSpeak 3 Client\\package_inst.exe' .\\ts3joininfo.ts3_plugin",
+				"problemMatcher": []
+			},
+			{
+				"label": "Build package for x86_64-pc-windows-msvc",
+				"type": "shell",
+				"command": "cargo build --release --target x86_64-pc-windows-msvc && cp ./target/x86_64-pc-windows-msvc/release/ts3joininfo.dll ./ts3_package/plugins/ts3joininfo_win32.dll && cp ./target/x86_64-pc-windows-msvc/release/ts3joininfo.dll ./ts3_package/plugins/ts3joininfo_win64.dll"
+			},
+			{
+				"label": "Build package for aarch64-pc-windows-msvc",
+				"type": "shell",
+				"command": "cargo build --release --target aarch64-pc-windows-msvc && cp ./target/aarch64-pc-windows-msvc/release/ts3joininfo.dll ./ts3_package/plugins/ts3joininfo_win64.dll"
+			},
+			{
+				"label": "Build package for x86_64-unknown-linux-gnu",
+				"type": "shell",
+				"command": "cargo build --release --target x86_64-unknown-linux-gnu && cp ./target/x86_64-unknown-linux-gnu/release/ts3joininfo.dll ./ts3_package/plugins/ts3joininfo_linux_x86.dll"
+			},
+			{
+				"label": "Build package for aarch64-unknown-linux-gnu",
+				"type": "shell",
+				"command": "cargo build --release --target aarch64-unknown-linux-gnu && cp ./target/aarch64-unknown-linux-gnu/release/ts3joininfo.dll ./ts3_package/plugins/ts3joininfo_linux_amd64.dll"
+			}
+		]
+	}
+}

@@ -1,0 +1,15 @@
+[package]
+name = "ts3-joininfo"
+version = "0.1.0"
+edition = "2018"
+
+
+[lib]
+name = "ts3joininfo"
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ts3plugin = { git = "https://github.com/brakenium/rust-ts3plugin.git" }
+chrono = "0.4"
