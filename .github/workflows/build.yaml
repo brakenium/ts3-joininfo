@@ -27,4 +27,17 @@ jobs:
         with:
           command: build
           args: --release --target ${{ matrix.target }}
-      
+      - name: Zip Release
+        # You may pin to the exact commit or the version.
+        # uses: TheDoctor0/zip-release@09336613be18a8208dfa66bd57efafd9e2685657
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          # Filename for archive
+          filename: ts3-joininfo.ts3_plugin
+          # Base path for archive files
+          path: ./ts3_package/*
+      - name: Rust Cache
+        # You may pin to the exact commit or the version.
+        # uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641
+        uses: Swatinem/rust-cache@v1.3.0
+
