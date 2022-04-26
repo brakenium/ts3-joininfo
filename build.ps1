@@ -10,5 +10,5 @@ cargo build --release --target $target
 Remove-Item "$($ts3_plugin_dll_dir)/*.dll"
 Copy-Item "./target/$($target)/release/$($plugin_name).dll" "$($ts3_plugin_dll_dir)/$($plugin_name)_win32.dll"
 Copy-Item "./target/$target/release/$($plugin_name).dll" "$($ts3_plugin_dll_dir)/$($plugin_name)_win64.dll"
-7za.exe a -tzip ts3joininfo.ts3_plugin .\ts3_package\*
+7z.exe a -tzip ts3joininfo.ts3_plugin .\ts3_package\*
 Start-Process $ts3_plugin_output
