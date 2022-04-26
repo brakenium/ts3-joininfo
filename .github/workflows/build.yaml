@@ -1,0 +1,43 @@
+name: Build the plugin and release on GitHub
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target:
+        - x86_64-pc-windows-msvc
+        - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        target: ${{ matrix.target }}
+        cross: true
+        with:
+          toolchain: stable
+      - name: build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+      - name: Zip Release
+        # You may pin to the exact commit or the version.
+        # uses: TheDoctor0/zip-release@09336613be18a8208dfa66bd57efafd9e2685657
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          # Filename for archive
+          filename: ts3-joininfo.ts3_plugin
+          # Base path for archive files
+          path: ./ts3_package/*
+      - name: Rust Cache
+        # You may pin to the exact commit or the version.
+        # uses: Swatinem/rust-cache@842ef286fff290e445b90b4002cc9807c3669641
+        uses: Swatinem/rust-cache@v1.3.0
+
