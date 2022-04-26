@@ -1,0 +1,30 @@
+name: Build the plugin and release on GitHub
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target:
+        - x86_64-pc-windows-msvc
+        - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        target: ${{ matrix.target }}
+        cross: true
+        with:
+          toolchain: stable
+      - name: build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+      
