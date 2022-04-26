@@ -12,13 +12,22 @@
 			"rust-lang.rust",
 			"swellaby.rust-pack",
 			"lorenzopirro.rust-flash-snippets",
-			"PolyMeilex.rust-targets"
+			"polymeilex.rust-targets",
+			"ms-vscode.powershell"
 		]
 	},
 	"settings": {},
 	"tasks": {
 		"version": "2.0.0",
 		"tasks": [
+			{
+				"label": "Build using Powershell",
+				"type": "shell",
+				"command": "./build.ps1",
+				"problemMatcher": [
+					"$rustc",
+				]
+			},
 			{
 				"label": "Full build pipeline",
 				"dependsOn": [
@@ -44,7 +53,7 @@
 				"label": "Remove old dlls",
 				"type": "shell",
 				"command": "rm ./ts3_package/plugins/*.dll"
-			}
+			},
 			{
 				"label": "Package ts3_plugin archive",
 				"type": "shell",
