@@ -1,7 +1,7 @@
 extern crate ts3plugin;
 
 use ts3plugin::*;
-mod util;
+mod format;
 
 struct Ts3JoinInfo;
 
@@ -24,6 +24,20 @@ fn get_connection_name<'a>(server: &'a Server, connection_id: ConnectionId) -> &
         .map_or("unknown", |connection| {
             intern_get_connection_name(connection)
         })
+}
+
+/// Get the name or phonetic name of a channel.
+fn get_channel_name<'a>(server: &'a Server, channel_id: ChannelId) -> &'a str {
+    server
+        .get_channel(channel_id)
+        .and_then(|c| {
+            c.get_phonetic_name()
+                .ok()
+                .and_then(|s| if s.is_empty() { None } else { Some(s) })
+                .or_else(|| c.get_name().ok())
+        })
+        .map(|s| s.as_str())
+        .unwrap_or("unknown channel")
 }
 
 fn client_moved_messenger(
@@ -49,20 +63,19 @@ fn client_moved_messenger(
             // Only if either old or new channel is the client's current channel
             Some(channel_id) if [old_channel_id, new_channel_id].contains(&channel_id) => {
                 // Get names of all channels that need to be mentioned
-                let connection_name = get_connection_name(server, connection_id);
                 let new_channel_name = get_channel_name(server, new_channel_id);
                 let old_channel_name = get_channel_name(server, old_channel_id);
 
                 // Get all mention formatted version of the channels
-                let connection_mention = util::format_mention(connection_name);
-                let old_channel_mention = util::format_mention(old_channel_name);
-                let new_channel_mention = util::format_mention(new_channel_name);
+                let connection_mention = format::format_connection(server, connection_id);
+                let old_channel_mention = format::format_mention(old_channel_name);
+                let new_channel_mention = format::format_mention(new_channel_name);
 
                 let mut action: String = String::from("switched");
                 // Format the message to be send
                 match invoker {
                     Some(invoker) => {
-                        let invoker_mention = util::format_mention(invoker.get_name());
+                        let invoker_mention = format::format_mention(invoker.get_name());
                         action = format!("was moved by {}", invoker_mention);
                     }
                     _ => (),
@@ -72,7 +85,7 @@ fn client_moved_messenger(
                     connection_mention, action, old_channel_mention, new_channel_mention
                 );
                 // Wrap message in the correct styling
-                formatted_message = util::format_info_message(&formatted_message);
+                formatted_message = format::format_info_message(&formatted_message);
                 // Send the message to the current tab's channel
                 server.print_message(formatted_message, MessageTarget::Channel);
             }
@@ -82,18 +95,55 @@ fn client_moved_messenger(
     }
 }
 
-/// Get the name or phonetic name of a channel.
-fn get_channel_name<'a>(server: &'a Server, channel_id: ChannelId) -> &'a str {
-    server
-        .get_channel(channel_id)
-        .and_then(|c| {
-            c.get_phonetic_name()
-                .ok()
-                .and_then(|s| if s.is_empty() { None } else { Some(s) })
-                .or_else(|| c.get_name().ok())
-        })
-        .map(|s| s.as_str())
-        .unwrap_or("unknown channel")
+fn client_connect_messenger(
+    api: &mut TsApi,
+    server_id: ServerId,
+    connection_id: ConnectionId,
+    connected: bool,
+    message: String,
+) {
+    if let Some(server) = api.get_server(server_id) {
+        // Get some english language symantics out of the way
+        let mut client_action = String::from("disconnected");
+        let mut channel_action = String::from("from");
+        match connected {
+            true => {
+                client_action = String::from("connected");
+                channel_action = String::from("to");
+            }
+            _ => (),
+        }
+
+        // Get all mention formatted version of the channels
+        let connection_mention = format::format_connection(server, connection_id);
+        match server
+            .get_connection(connection_id)
+            .and_then(|c| c.get_channel_id().ok())
+        {
+            Some(channel_id) => {
+                // let channel_mention = format::format_channel(server, channel_id);
+                let channel_mention = format::format_mention(get_channel_name(server, channel_id));
+                client_action =
+                    format!("{} {} {}", client_action, channel_action, channel_mention);
+            }
+            _ => (),
+        }
+
+        let mut formatted_message =
+            format!("{} {}", connection_mention, client_action);
+
+        match message.is_empty() {
+            false => {
+                formatted_message = format!("{} ({})", formatted_message, message);
+            }
+            _ => (),
+        }
+
+        // Wrap message in the correct styling
+        formatted_message = format::format_info_message(&formatted_message);
+
+        server.print_message(formatted_message, MessageTarget::Channel);
+    }
 }
 
 impl Plugin for Ts3JoinInfo {
@@ -160,6 +210,25 @@ impl Plugin for Ts3JoinInfo {
             new_channel_id,
             Some(invoker),
         );
+    }
+
+    // fn connection_timeout(
+    //     &mut self,
+    //     api: &mut TsApi,
+    //     server_id: ServerId,
+    //     connection_id: ConnectionId,
+    // ) {
+    // }
+
+    fn connection_changed(
+        &mut self,
+        api: &mut TsApi,
+        server_id: ServerId,
+        connection_id: ConnectionId,
+        connected: bool,
+        message: String,
+    ) {
+        client_connect_messenger(api, server_id, connection_id, connected, message);
     }
 }
 
