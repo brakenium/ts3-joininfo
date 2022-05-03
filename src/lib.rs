@@ -38,7 +38,7 @@ fn client_moved_messenger(
                 // Format the message to be send
                 match invoker {
                     Some(invoker) => {
-                        let invoker_mention = format::format_mention(invoker.get_name());
+                        let invoker_mention = format::format_connection(server, invoker.get_id(), api);
                         action = format!("was moved by {}", invoker_mention);
                     }
                     _ => (),
