@@ -2,43 +2,10 @@ extern crate ts3plugin;
 
 use ts3plugin::*;
 mod format;
+mod constants;
+use constants::*;
 
 struct Ts3JoinInfo;
-
-// Internal function for getting the channel name
-fn intern_get_connection_name(connection: &Connection) -> &str {
-    let result = connection
-        .get_phonetic_name()
-        .ok()
-        .and_then(|s| if s.is_empty() { None } else { Some(s.as_str()) })
-        .or_else(|| connection.get_name().ok().map(|s| s.as_str()))
-        .unwrap_or("unknown");
-    // Take name until the first space
-    result.find(' ').map_or(result, |i| result.split_at(i).0)
-}
-
-/// Get the name or phonetic name of a connection.
-fn get_connection_name<'a>(server: &'a Server, connection_id: ConnectionId) -> &'a str {
-    server
-        .get_connection(connection_id)
-        .map_or("unknown", |connection| {
-            intern_get_connection_name(connection)
-        })
-}
-
-/// Get the name or phonetic name of a channel.
-fn get_channel_name<'a>(server: &'a Server, channel_id: ChannelId) -> &'a str {
-    server
-        .get_channel(channel_id)
-        .and_then(|c| {
-            c.get_phonetic_name()
-                .ok()
-                .and_then(|s| if s.is_empty() { None } else { Some(s) })
-                .or_else(|| c.get_name().ok())
-        })
-        .map(|s| s.as_str())
-        .unwrap_or("unknown channel")
-}
 
 fn client_moved_messenger(
     api: &mut TsApi,
@@ -62,14 +29,10 @@ fn client_moved_messenger(
             // Format a message that looks like a server wide move message
             // Only if either old or new channel is the client's current channel
             Some(channel_id) if [old_channel_id, new_channel_id].contains(&channel_id) => {
-                // Get names of all channels that need to be mentioned
-                let new_channel_name = get_channel_name(server, new_channel_id);
-                let old_channel_name = get_channel_name(server, old_channel_id);
-
                 // Get all mention formatted version of the channels
-                let connection_mention = format::format_connection(server, connection_id);
-                let old_channel_mention = format::format_mention(old_channel_name);
-                let new_channel_mention = format::format_mention(new_channel_name);
+                let connection_mention = format::format_connection(server, connection_id, api);
+                let old_channel_mention = format::format_channel(server, old_channel_id, api);
+                let new_channel_mention = format::format_channel(server, new_channel_id, api);
 
                 let mut action: String = String::from("switched");
                 // Format the message to be send
@@ -115,14 +78,14 @@ fn client_connect_messenger(
         }
 
         // Get all mention formatted version of the channels
-        let connection_mention = format::format_connection(server, connection_id);
+        let connection_mention = format::format_connection(server, connection_id, api);
         match server
             .get_connection(connection_id)
             .and_then(|c| c.get_channel_id().ok())
         {
             Some(channel_id) => {
                 // let channel_mention = format::format_channel(server, channel_id);
-                let channel_mention = format::format_mention(get_channel_name(server, channel_id));
+                let channel_mention = format::format_channel(server, channel_id, api);
                 client_action =
                     format!("{} {} {}", client_action, channel_action, channel_mention);
             }
@@ -149,7 +112,7 @@ fn client_connect_messenger(
 impl Plugin for Ts3JoinInfo {
     // Configure plugin info
     fn name() -> String {
-        String::from("Channel Join Info")
+        String::from(PLUGIN_NAME)
     }
     fn version() -> String {
         String::from("0.1.0")
@@ -161,14 +124,14 @@ impl Plugin for Ts3JoinInfo {
         String::from("A plugin that will display user join messages in the channel chat.")
     }
     fn new(api: &mut TsApi) -> Result<Box<Ts3JoinInfo>, InitError> {
-        api.log_or_print("Inited", "ts3-joininfo", LogLevel::Info);
+        api.log_or_print("Inited", PLUGIN_NAME, LogLevel::Info);
         Ok(Box::new(Ts3JoinInfo))
     }
 
     // Implement callbacks here
 
     fn shutdown(&mut self, api: &mut TsApi) {
-        api.log_or_print("Shutdown", "ts3-joininfo", LogLevel::Info);
+        api.log_or_print("Shutdown", PLUGIN_NAME, LogLevel::Info);
     }
 
     // TODO: Add connection_moved callback
