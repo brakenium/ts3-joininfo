@@ -1,51 +1,57 @@
 use chrono::prelude::Local;
 use ts3plugin::*;
+use crate::constants::*;
 
 pub fn format_mention(text: &str) -> String {
     // Use BBCode formatting to get the darkblue and bold styling of the default join messages
     return format!("[color=#002f5d][b]\"{}\"[/b][/color]", text);
 }
 
-pub fn mention_connection(conn: &Connection) -> String {
+pub fn mention_connection(conn: &Connection, api: &TsApi) -> String {
     if let Ok(name) = conn.get_name() {
         if let Ok(uid) = conn.get_uid() {
-            return format!("[URL=client://{}~{}]{}[/URL]", uid, name, name);
+            return format!("[URL=client://{}]{}[/URL]", uid, name);
         }
         else {
             return format_mention(name);
         }
     }
-    String::from("Unkown client")
+    api.log_or_print("Unable to determine name from connection", PLUGIN_NAME, LogLevel::Error);
+    String::from("unknown client")
 }
 
-pub fn mention_channel(conn: &Channel) -> String {
-    if let Ok(name) = conn.get_name() {
-        let channel_id = conn.get_id();
-        return format!("[URL=channel://{:?}~{}]{}[/URL]", channel_id, name, name);
+// TODO: Fix link styling in channel mention
+pub fn mention_channel(channel: &Channel, api: &TsApi) -> String {
+    if let Ok(name) = channel.get_name() {
+        let channel_id = channel.get_id();
+        return format!("[URL=channelid://{:?}]{}[/URL]", channel_id, name);
     }
-    String::from("Unkown client")
+    api.log_or_print("Unable to determine name from channel", PLUGIN_NAME, LogLevel::Error);
+    String::from("Unknown client")
 }
 
-pub fn format_connection(server: &Server, connection_id: ConnectionId) -> String {
+pub fn format_connection(server: &Server, connection_id: ConnectionId, api: &TsApi) -> String {
     match server.get_connection(connection_id) {
         Some(conn) => {
-            let connection_mention = mention_connection(conn);
+            let connection_mention = mention_connection(conn, api);
             return format_mention(connection_mention.as_str());
         },
         _ => (),
     }
-    String::from("Unkown client")
+    api.log_or_print("Unable to determine mention from connection", PLUGIN_NAME, LogLevel::Error);
+    String::from("unknown client")
 }
 
-pub fn format_channel(server: &Server, channel_id: ChannelId) -> String {
+pub fn format_channel(server: &Server, channel_id: ChannelId, api: &TsApi) -> String {
     match server.get_channel(channel_id) {
         Some(channel) => {
-            let connection_mention = mention_channel(channel);
+            let connection_mention = mention_channel(channel, api);
             return format_mention(connection_mention.as_str());
         },
         _ => (),
     }
-    String::from("Unkown client")
+    api.log_or_print("Unable to determine mention from channel", PLUGIN_NAME, LogLevel::Error);
+    String::from("unknown channel")
 }
 
 pub fn format_info_message(text: &str) -> String {
