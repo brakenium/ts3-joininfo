@@ -124,7 +124,7 @@ impl Plugin for Ts3JoinInfo {
         String::from("A plugin that will display user join messages in the channel chat.")
     }
     fn new(api: &mut TsApi) -> Result<Box<Ts3JoinInfo>, InitError> {
-        api.log_or_print("Inited", PLUGIN_NAME, LogLevel::Info);
+        api.log_or_print("Initiated", PLUGIN_NAME, LogLevel::Info);
         Ok(Box::new(Ts3JoinInfo))
     }
 
