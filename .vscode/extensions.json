@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "statiolake.vscode-rustfmt",
+        "dustypomerleau.rust-syntax",
+        "rust-lang.rust-analyzer"
+    ]
+}

@@ -1,8 +1,8 @@
 extern crate ts3plugin;
 
 use ts3plugin::*;
-mod format;
 mod constants;
+mod format;
 use constants::*;
 
 struct Ts3JoinInfo;
@@ -38,7 +38,8 @@ fn client_moved_messenger(
                 // Format the message to be send
                 match invoker {
                     Some(invoker) => {
-                        let invoker_mention = format::format_connection(server, invoker.get_id(), api);
+                        let invoker_mention =
+                            format::format_connection(server, invoker.get_id(), api);
                         action = format!("was moved by {}", invoker_mention);
                     }
                     _ => (),
@@ -86,14 +87,12 @@ fn client_connect_messenger(
             Some(channel_id) => {
                 // let channel_mention = format::format_channel(server, channel_id);
                 let channel_mention = format::format_channel(server, channel_id, api);
-                client_action =
-                    format!("{} {} {}", client_action, channel_action, channel_mention);
+                client_action = format!("{} {} {}", client_action, channel_action, channel_mention);
             }
             _ => (),
         }
 
-        let mut formatted_message =
-            format!("{} {}", connection_mention, client_action);
+        let mut formatted_message = format!("{} {}", connection_mention, client_action);
 
         match message.is_empty() {
             false => {
